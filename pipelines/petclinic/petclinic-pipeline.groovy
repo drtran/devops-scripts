@@ -40,6 +40,14 @@ node {
    }
    stage('Results') {
       echo 'Archiving ...'
+      publishHTML(target: [
+        allowMissing: true, 
+        alwaysLinkToLastBuild: false, 
+        keepAll: true, 
+        reportDir: 'target/site/jacoco/', 
+        reportFiles: 'index.html', 
+        reportName: 'Code Coverage Report', 
+        reportTitles: ''])
       junit '**/target/surefire-reports/TEST-*.xml'
       archive 'target/*.war'
    }
