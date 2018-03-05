@@ -4,15 +4,21 @@ node {
       git 'https://github.com/drtran/forked-spring-petclinic.git'
       mvnHome = tool 'M3'
    }
-   stage('Scan') {
+   stage('Scan with SonarQube') {
        echo "Running SonarQube scan ..."
+      if (isUnix()) {
+         sh "'${mvnHome}/bin/mvn' clean test verify sonar:sonar"
+      } else {
+         bat(/"${mvnHome}\bin\mvn" clean test verify sonar:sonar/)
+      }
+
    }
    stage('Build') {
       // Run the maven build
       if (isUnix()) {
-         sh "'${mvnHome}/bin/mvn' clean package"
+         sh "'${mvnHome}/bin/mvn' package"
       } else {
-         bat(/"${mvnHome}\bin\mvn" -Dmaven.test.failure.ignore clean package/)
+         bat(/"${mvnHome}\bin\mvn" package/)
       }
    }
    stage('Deploy') {
