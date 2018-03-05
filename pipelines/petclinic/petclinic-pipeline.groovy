@@ -24,8 +24,8 @@ node {
 
    stage('OpenShift Build') {
       if (isUnix()) {
-         sh "'/home/kiet/minishift/oc login --username=dev --password=dev'"
-         sh "'/home/kiet/minishift/oc start-build pet-clinic -n pet-clinic"
+         sh "'/home/kiet/minishift/oc' login --username=dev --password=dev"
+         sh "'/home/kiet/minishift/oc' start-build pet-clinic -n pet-clinic"
       } else {
          bat(/"${mvnHome}\bin\mvn" package/)
       }  
