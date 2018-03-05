@@ -13,13 +13,22 @@ node {
       }
 
    }
-   stage('Build') {
+   stage('Local Build') {
       // Run the maven build
       if (isUnix()) {
          sh "'${mvnHome}/bin/mvn' package"
       } else {
          bat(/"${mvnHome}\bin\mvn" package/)
       }
+   }
+
+   stage('OpenShift Build') {
+      if (isUnix()) {
+         sh "'/home/kiet/minishift/oc login --username=dev --password=dev'"
+         sh "'/home/kiet/minishift/oc start-build pet-clinic -n pet-clinic"
+      } else {
+         bat(/"${mvnHome}\bin\mvn" package/)
+      }  
    }
    stage('Deploy') {
        echo "deploying ..."
