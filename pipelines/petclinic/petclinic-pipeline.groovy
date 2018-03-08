@@ -35,7 +35,7 @@ node {
        if (isUnix()) {
            sh "cp target/petclinic.war /home/kiet/csd-work/bin/apache-tomcat-8.5.28/webapps/."
        } else {
-           bat "copy target/petclinic.war c:/csd-work/bin/apache-tomcat-8.5.28/webapps/."
+           bat "copy target\\petclinic.war c:\\dev/bin\\apache-tomcat-8.5.28\\webapps\\."
        }
    }
    stage('Results') {
