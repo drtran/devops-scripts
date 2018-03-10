@@ -21,6 +21,12 @@ node {
          bat(/"${mvnHome}\bin\mvn" package/)
       }
    }
+   
+   /**
+    * Here we should build an image - tag it somehow.
+    * Then we should deploy that image on a dev environment
+    * 
+    */
 
    stage('OpenShift Build') {
       if (isUnix()) {
@@ -30,12 +36,13 @@ node {
          bat(/"${mvnHome}\bin\mvn" package/)
       }  
    }
-   stage('Deploy') {
+   
+   stage('Deploy on my local box') {
        echo "deploying ..."
        if (isUnix()) {
            sh "cp target/petclinic.war /home/kiet/csd-work/bin/apache-tomcat-8.5.28/webapps/."
        } else {
-           bat "copy target/petclinic.war c:/csd-work/bin/apache-tomcat-8.5.28/webapps/."
+           bat "copy target\\petclinic.war c:\\csd-work\\bin\\apache-tomcat-8.5.28\\webapps\\."
        }
    }
    stage('Results') {
