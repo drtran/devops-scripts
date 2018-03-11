@@ -4,15 +4,26 @@ node {
       git 'https://github.com/drtran/forked-spring-petclinic.git'
       mvnHome = tool 'M3'
    }
+
    stage('Scan with SonarQube') {
-       echo "Running SonarQube scan ..."
+      echo "Running SonarQube scan ..."
+      
       if (isUnix()) {
          sh "'${mvnHome}/bin/mvn' clean test verify sonar:sonar"
       } else {
          bat(/"${mvnHome}\bin\mvn" clean test verify sonar:sonar/)
       }
 
+      sh '/home/kiet/minishift/sonarqube_client check-coverage --site http://localhost:9000 --expected-coverage 84 > status'
+      def scanStatus = readFile('status').trim()
+
+      if (scanStatus.toLowerCase().contains("failed")) {
+          error ("Scan Status: ${scanStatus}")
+      }
+      
+      echo "Scan Status: ${scanStatus}"
    }
+
    stage('Local Build') {
       // Run the maven build
       if (isUnix()) {
