@@ -54,26 +54,8 @@ node {
       }
    }
 
-   stage('Deploy Automated Acceptance Tests') {
-      echo 'Deploy Automated Acceptance Tests'
-      echo '**** Pulling Source Code ****'
-
-      git 'https://github.com/drtran/aat.git'
-      mvnHome = tool 'M3'
-      
-      def testName = "-Dtest=gov.dhs.nppd.devsecops.aat.RunSerenityTest"
-      
-      if (isUnix()) {
-        def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=/home/kiet/csd-work/bin/misc/chromedriver"
-        sh "'${mvnHome}/bin/mvn' clean ${testName} ${chromeDriver} verify"
-      } else {
-         def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=c:\\dev\\bin\\misc\\chromedriver.exe"
-         bat(/"${mvnHome}\\bin\\mvn" clean ${testName} ${chromeDriver} verify/) 
-      }
-   }
-
-   stage('Finalize Results') {
-      echo '**** Finalize Results ****'
+   stage('Finalize Results for Petclinic Project') {
+      echo '**** Finalize Results for Petclinic Project ****'
 
       publishHTML(target: [
         allowMissing: true, 
@@ -85,5 +67,37 @@ node {
         reportTitles: ''])
       junit '**/target/surefire-reports/TEST-*.xml'
       archive 'target/*.war'
+   }
+
+
+   stage('Deploy Automated Acceptance Tests') {
+      echo 'Deploy Automated Acceptance Tests'
+      echo '**** Pulling Source Code ****'
+
+      git 'https://github.com/drtran/aat.git'
+      mvnHome = tool 'M3'
+
+      def testName = "-Dtest=gov.dhs.nppd.devsecops.aat.RunSerenityTest"
+      
+      if (isUnix()) {
+        def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=/home/kiet/csd-work/bin/misc/chromedriver"
+        sh "'${mvnHome}/bin/mvn' clean ${testName} ${chromeDriver} verify"
+      } else {
+         def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=c:\\dev\\bin\\misc\\chromedriver.exe"
+         bat(/"${mvnHome}\\bin\\mvn" clean ${testName} ${chromeDriver} verify/) 
+      }
+   }
+
+   stage('Finalize Results for Automated Acceptance Tests') {
+      echo '**** Finalize Results for Automated Acceptance Tests ****'
+
+      publishHTML(target: [
+        allowMissing: true, 
+        alwaysLinkToLastBuild: false, 
+        keepAll: true, 
+        reportDir: 'target/site/serenity/', 
+        reportFiles: 'index.html', 
+        reportName: 'Acceptance Tests Report', 
+        reportTitles: ''])
    }
 }
