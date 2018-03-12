@@ -20,6 +20,7 @@ node {
         
       } else {
          bat(/"${mvnHome}\\bin\\mvn" clean test verify sonar:sonar/)
+         bat(/"c:\\minishift\\sonarqube_client.exe" check-coverage ${site} ${expectedCoverage} > status/)
       }
 
       def scanStatus = readFile('status').trim()
