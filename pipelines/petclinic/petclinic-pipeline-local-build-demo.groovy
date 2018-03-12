@@ -1,14 +1,14 @@
 node {
    def mvnHome
 
-   stage('Pulling Source Code from GIT') { 
+  stage('Pulling Source Code from GIT') { 
       echo '**** Pulling Source Code from GIT ****'
 
       git 'https://github.com/drtran/forked-spring-petclinic.git'
       mvnHome = tool 'M3'
-   }
+  }
 
-   stage('Scan source for technical debts & code coverage (SonarQube)') {
+  stage('Scan source for technical debts & code coverage (SonarQube)') {
       echo '**** Scan source for technical debts & code coverage (SonarQube) ****'
       
       def site = "--site http://localhost:9000"
@@ -31,7 +31,7 @@ node {
       }
       
       echo "Code Coverage: ${scanStatus}"
-   }
+  }
 
   stage('Build binaries & deploy for functional testing') {
       echo '**** Build binaries & deploy for functional testing ****'
@@ -49,9 +49,9 @@ node {
         bat(/"${mvnHome}\\bin\\mvn" tomcat7:undeploy/)
         bat(/"${mvnHome}\\bin\\mvn" tomcat7:deploy-only/)
       }
-   }
+  }
 
-   stage('Archiving binaries & reports (unit tests & code coverage)') {
+  stage('Archiving binaries & reports (unit tests & code coverage)') {
       echo '**** Archiving binaries & reports (unit tests & code coverage) ****'
 
       publishHTML(target: [
@@ -64,7 +64,7 @@ node {
         reportTitles: ''])
       junit '**/target/surefire-reports/TEST-*.xml'
       archive 'target/*.war'
-   }
+  }
 
 
    stage('Run Automated Acceptance Tests (Cucumber/Selenium)') {
@@ -74,13 +74,32 @@ node {
       mvnHome = tool 'M3'
 
       def testName = "-Dtest=gov.dhs.nppd.devsecops.aat.RunSerenityTest"
-      
-      if (isUnix()) {
-        def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=/home/kiet/csd-work/bin/misc/chromedriver"
-        sh "'${mvnHome}/bin/mvn' clean ${testName} ${chromeDriver} verify"
-      } else {
-         def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=c:\\dev\\bin\\misc\\chromedriver.exe"
-         bat(/"${mvnHome}\\bin\\mvn" clean ${testName} ${chromeDriver} verify/) 
+      try {
+        if (isUnix()) {
+            def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=/home/kiet/csd-work/bin/misc/chromedriver"
+            wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
+              sh "'${mvnHome}/bin/mvn' clean ${testName} ${chromeDriver} verify"
+            }
+        } else {
+            def chromeDriver = "-Dwebdriver.driver=chrome -Dwebdriver.chrome.driver=c:\\dev\\bin\\misc\\chromedriver.exe"
+            bat(/"${mvnHome}\\bin\\mvn" clean ${testName} ${chromeDriver} verify/) 
+        }
+      } catch (e) {
+          echo "making serenity report ..."
+          if (isUnix()) {
+            sh "'${mvnHome}/bin/mvn' -Dmaven.test.skip=true verify"
+          } else {
+            bat(/"${mvnHome}\\bin\\mvn" -Dmaven.test.skip=true verify/) 
+          }
+          publishHTML(target: [
+          allowMissing: true, 
+          alwaysLinkToLastBuild: false, 
+          keepAll: true, 
+          reportDir: 'target/site/serenity/', 
+          reportFiles: 'index.html', 
+          reportName: 'Serenity Report (Acceptance Tests)',
+          reportTitles: ''])
+          throw e
       }
    }
 
