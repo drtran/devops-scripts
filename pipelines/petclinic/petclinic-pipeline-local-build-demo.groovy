@@ -1,15 +1,15 @@
 node {
    def mvnHome
 
-   stage('Pulling Source Code') { 
-      echo '**** Pulling Source Code ****'
+   stage('Pulling Source Code from GIT') { 
+      echo '**** Pulling Source Code from GIT ****'
 
       git 'https://github.com/drtran/forked-spring-petclinic.git'
       mvnHome = tool 'M3'
    }
 
-   stage('Scan with SonarQube') {
-      echo '**** Scan with SonarQube ****'
+   stage('Scan source for technical debts & code coverage (SonarQube)') {
+      echo '**** Scan source for technical debts & code coverage (SonarQube) ****'
       
       def site = "--site http://localhost:9000"
       def expectedCoverage = "--expected-coverage 83"
@@ -33,18 +33,14 @@ node {
       echo "Code Coverage: ${scanStatus}"
    }
 
-  stage('Build Locally') {
-      echo '**** Build Locally ****'
+  stage('Build binaries & deploy for functional testing') {
+      echo '**** Build binaries & deploy for functional testing ****'
 
       if (isUnix()) {
          sh "'${mvnHome}/bin/mvn' package"
       } else {
          bat(/"${mvnHome}\\bin\\mvn" package/)
       }
-   }
-   
-  stage('Deploy Locally for Testing') {
-    echo '**** Deploy Locally for Testing ****'
 
       if (isUnix()) {
         sh "'${mvnHome}/bin/mvn' tomcat7:undeploy"
@@ -55,8 +51,8 @@ node {
       }
    }
 
-   stage('Finalize Results for Petclinic Project') {
-      echo '**** Finalize Results for Petclinic Project ****'
+   stage('Archiving binaries & reports (unit tests & code coverage)') {
+      echo '**** Archiving binaries & reports (unit tests & code coverage) ****'
 
       publishHTML(target: [
         allowMissing: true, 
@@ -71,9 +67,8 @@ node {
    }
 
 
-   stage('Deploy Automated Acceptance Tests') {
-      echo 'Deploy Automated Acceptance Tests'
-      echo '**** Pulling Source Code ****'
+   stage('Run Automated Acceptance Tests (Cucumber/Selenium)') {
+      echo '**** Run Automated Acceptance Tests (Cucumber/Selenium) **** '
 
       git 'https://github.com/drtran/aat.git'
       mvnHome = tool 'M3'
@@ -89,8 +84,8 @@ node {
       }
    }
 
-   stage('Finalize Results for Automated Acceptance Tests') {
-      echo '**** Finalize Results for Automated Acceptance Tests ****'
+   stage('Archiving Serenity (Cucumber/Selenium) Report') {
+      echo '**** Archiving Serenity (Cucumber/Selenium) Report ****'
 
       publishHTML(target: [
         allowMissing: true, 
@@ -98,7 +93,7 @@ node {
         keepAll: true, 
         reportDir: 'target/site/serenity/', 
         reportFiles: 'index.html', 
-        reportName: 'Acceptance Tests Report', 
+        reportName: 'Serenity Report (Acceptance Tests)',
         reportTitles: ''])
    }
 }
