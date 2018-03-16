@@ -11,12 +11,28 @@
 node {
     // need string parameter PROJECT_NAME
     // need string parameter APP_NAME
-    stage ('preamble') {
-
+    // need string parameter RELEASE (a.b.c.d.etc.)
+    
+    if (!env.RELEASE) {
+    	RELEASE  = "latest"
     }
 
-    stage ('cleanup') {
+    release_no_dots = RELEASE.replaceAll("\\.","")
+    
+    echo "RELEASE: ${RELEASE}"
+    echo "release_no_dots: ${release_no_dots}"
+    oc_app_name = "${APP_NAME}-${release_no_dots}"
 
+    stage ('cleanup') {
+    	if (!isUnix()) {
+    		try {
+    			bat(/oc delete route ${oc_app_name}/)
+    			bat(/oc delete service ${oc_app_name}/)
+    			bat(/oc delete dc ${oc_app_name}/)
+    		} catch (e) {
+    			echo 'Resources probably do not exist!'
+    		}
+    	}
     }
 
     stage ('create') {
@@ -24,24 +40,25 @@ node {
     }
     
     stage ('build') {
-    	openshiftBuild(namespace: '${PROJECT_NAME}', buildConfig: '${APP_NAME}', showBuildLogs: 'true')
+    	// openshiftBuild(namespace: '${PROJECT_NAME}', buildConfig: '${APP_NAME}', showBuildLogs: 'true')
     }
     
     stage ('deploy') {
-    	openshiftDeploy(namespace: '${PROJECT_NAME}', deploymentConfig: '${APP_NAME}')
-    	openshiftScale(namespace: '${PROJECT_NAME}', deploymentConfig: '${APP_NAME}',replicaCount: '2')
-    	openshiftVerifyDeployment(namespace: '${PROJECT_NAME}', deploymentConfig: '${APP_NAME}')
+    	if (!isUnix()) {
+    		release_image_name = "${APP_NAME}:${RELEASE}"
+    		app_image_name = "imagestreams/${APP_NAME}"
+    		bat(/oc describe ${app_image_name}/)
+    		bat(/oc new-app ${release_image_name} --name=${oc_app_name}/)
+    	}
 	}
 	
 	stage ('expose service') {
-	    if (isUnix()) {
+	    if (!isUnix()) {
 	    	try {
-	        	sh "'${mypath}/oc' expose services/${APP_NAME}'"
+	        	bat(/oc expose services\/${oc_app_name}/)
 	        } catch (e) {
 	        	echo 'service may already exist'
 	        }
-	    } else {
-	        
 	    }
 	}
 	
